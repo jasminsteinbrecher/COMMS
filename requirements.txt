@@ -1,0 +1,8 @@
+Flask
+requests
+numpy
+sounddevice
+cryptography
+psutil
+pymumble
+flask-cors

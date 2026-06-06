@@ -1,0 +1,8 @@
+[
+  {"name": "S/G 1",                 "can_listen": true,  "can_talk": true},
+  {"name": "S/G 2",                 "can_listen": true,  "can_talk": true},
+  {"name": "S/G SCIENCE",           "can_listen": true,  "can_talk": true},
+  {"name": "S/G PRIVATE 1",         "can_listen": true,  "can_talk": true},
+  {"name": "S/G PRIVATE 2",         "can_listen": true,  "can_talk": true},
+  {"name": "S/G PRIVATE MEDICAL",   "can_listen": true,  "can_talk": true}
+]
