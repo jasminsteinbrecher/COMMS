@@ -1,13 +1,13 @@
 [
-  {"name": "S/G 1",           "can_listen": true,  "can_talk": true},
-  {"name": "S/G 2",           "can_listen": true,  "can_talk": true},
+  {"name": "SG 1",           "can_listen": true,  "can_talk": true},
+  {"name": "SG 2",           "can_listen": true,  "can_talk": true},
   {"name": "FLIGHT",          "can_listen": true,  "can_talk": true},
   {"name": "CAPCOM",          "can_listen": true,  "can_talk": true},
   {"name": "SCIENCE COORD",   "can_listen": true,  "can_talk": true},
   {"name": "EVA COORD",       "can_listen": true,  "can_talk": true},
   {"name": "MEDICAL COORD",   "can_listen": true,  "can_talk": true},
   {"name": "COMMANDS",        "can_listen": true,  "can_talk": true},
-  {"name": "S/G SCIENCE",     "can_listen": true,  "can_talk": true},
-  {"name": "S/G PRIVATE 1",   "can_listen": true,  "can_talk": true},
-  {"name": "S/G PRIVATE 2",   "can_listen": true,  "can_talk": true}
+  {"name": "SG SCIENCE",     "can_listen": true,  "can_talk": true},
+  {"name": "SG PRIVATE 1",   "can_listen": true,  "can_talk": true},
+  {"name": "SG PRIVATE 2",   "can_listen": true,  "can_talk": true}
 ]

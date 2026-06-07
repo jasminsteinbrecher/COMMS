@@ -1,11 +1,11 @@
 [
-  {"name": "S/G 1",           "can_listen": true,  "can_talk": false},
-  {"name": "S/G 2",           "can_listen": true,  "can_talk": false},
+  {"name": "SG 1",           "can_listen": true,  "can_talk": false},
+  {"name": "SG 2",           "can_listen": true,  "can_talk": false},
   {"name": "FLIGHT",          "can_listen": true,  "can_talk": true},
   {"name": "CAPCOM",          "can_listen": true,  "can_talk": true},
   {"name": "SCIENCE COORD",   "can_listen": true,  "can_talk": true},
   {"name": "EVA COORD",       "can_listen": true,  "can_talk": true},
   {"name": "COMMANDS",        "can_listen": true,  "can_talk": true},
-  {"name": "S/G SCIENCE",     "can_listen": true,  "can_talk": false}
+  {"name": "SG SCIENCE",     "can_listen": true,  "can_talk": false}
 ]
 
