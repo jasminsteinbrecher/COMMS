@@ -82,13 +82,15 @@ MAIN_HTML = r"""
 .talkers{position:absolute;top:58%;left:50%;transform:translate(-50%,0);font-size:.8rem;text-align:center;pointer-events:none;user-select:none}
  .vol{position:absolute;bottom:10px;left:10px;width:55%}
  .off{position:absolute;bottom:6px;right:10px;padding:4px 10px;background:var(--danger);border:none;border-radius:4px;color:#fff;font-weight:600}
- #logo{position:fixed;bottom:10px;right:10px;height:60px;opacity:.6}
+  #alarm{background:#c22c2c;border:2px solid #ff4444;font-weight:700;padding:6px 14px}#alarm:hover{background:#e03333}#alarm:active{background:#8f1f1f}
+  #logo{position:fixed;bottom:10px;right:10px;height:60px;opacity:.6}
 </style></head>
 <body>
   <div id="controls">
     <label>Input:<select id="inDev"></select></label>
     <label>Output:<select id="outDev"></select></label>
     <button id="delay">Delay</button>
+    <button id="alarm">🔔 ALARM</button>
     <canvas id="wave"></canvas>
   </div>
   <div id="grid"></div>
@@ -107,16 +109,19 @@ function grid(){const g=document.getElementById('grid');g.innerHTML='';LOOPS.for
  async function wave(){try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const ctx=new(window.AudioContext||window.webkitAudioContext)();const src=ctx.createMediaStreamSource(stream);const analyser=ctx.createAnalyser();analyser.fftSize=256;src.connect(analyser);const data=new Uint8Array(analyser.fftSize);const cvs=document.getElementById('wave');const c=cvs.getContext('2d');const H=cvs.height;const W=cvs.width;(function draw(){requestAnimationFrame(draw);analyser.getByteTimeDomainData(data);c.clearRect(0,0,W,H);c.beginPath();data.forEach((v,i)=>{const x=i*W/data.length;const y=(1-(v-128)/128)*H/2;i?c.lineTo(x,y):c.moveTo(x,y)});c.strokeStyle='#ffffff';c.lineWidth=2;c.stroke();})();}catch(e){console.error(e);}}
  // ------------- actions -------------
  async function act(a,l){const r=await fetch('/api/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:a,loop:l})});try{const j=await r.json();if('port'in j){const c=document.querySelector(`[data-loop="${l}"]`);if(c)c.dataset.port=j.port||'';}}catch(e){}refresh()}
- const dBtn=document.getElementById('delay');
- dBtn.onclick = async () => {
-     delay = !delay;
-     dBtn.style.background = delay ? '#43d843' : '#c22c2c';
-     await fetch('/api/command', {
-         method:'POST',
-         headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({action:'delay', enabled: delay})
-     });
- };
+  const dBtn=document.getElementById('delay');
+  dBtn.onclick = async () => {
+      delay = !delay;
+      dBtn.style.background = delay ? '#43d843' : '#c22c2c';
+      await fetch('/api/command', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({action:'delay', enabled: delay})
+      });
+  };
+  document.getElementById('alarm').onclick = async () => {
+      await fetch('/api/alarm', { method: 'POST' });
+  };
 // ------------- poll -------------
 async function refresh(){const r=await (await fetch('/api/status')).json();delay=r.delay;dBtn.style.background=delay?'#43d843':'#c22c2c';LOOPS.forEach(l=>{const c=document.querySelector(`[data-loop="${l.name}"]`);if(!c)return;c.dataset.port=r.assignments[l.name]||'';c.querySelector('.cnt').textContent=`👥${r.user_counts[l.name]||0}`;c.classList.remove('listen','talk');if(r.states[l.name]==1)c.classList.add('listen');if(r.states[l.name]==2)c.classList.add('talk');const t=c.querySelector('.talkers');if(t)t.textContent=(r.talkers[l.name]||[]).join(', ');const v=c.querySelector('.vol');if(v&&r.volumes)v.value=r.volumes[l.name]??1;});}
  // ------------- init -------------
@@ -312,6 +317,34 @@ def command_api():
     bot_pool[assigned]['last_used'] = time.time()
     loop_states[loop] = (new_state, assigned)
     return jsonify(port=port)
+
+# ------------------------------ ALARM ------------------------------------
+ALARM_BOT_PORT = 6004
+
+@app.route('/api/alarm', methods=['POST'])
+def api_alarm():
+    for b in bot_pool.values():
+        try:
+            requests.post(
+                f"http://127.0.0.1:{b['port']}/play_alarm", json={}, timeout=1.0
+            )
+        except Exception:
+            pass
+    broadcast_port = BOTS[0]['port']
+    try:
+        requests.post(
+            f"http://127.0.0.1:{broadcast_port}/transmit_alarm",
+            json={}, timeout=1.0,
+        )
+    except Exception:
+        pass
+    try:
+        requests.post(
+            f"http://127.0.0.1:{ALARM_BOT_PORT}/play_alarm", json={}, timeout=1.0
+        )
+    except Exception:
+        pass
+    return '', 204
 
 
 if __name__ == '__main__':

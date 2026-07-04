@@ -304,6 +304,56 @@ class LoopBot:
         """
         self.playback_volume = max(0.0, min(2.0, float(vol)))
 
+    def play_alarm(self):
+        import wave
+        alarm_path = os.path.join(script_dir, 'sounds', 'alarm.wav')
+        try:
+            with wave.open(alarm_path, 'rb') as wf:
+                raw = wf.readframes(wf.getnframes())
+            stereo = np.frombuffer(raw, dtype=np.int16).reshape(-1, 2)
+            mono = stereo.mean(axis=1).astype(np.int16)
+            orig = np.arange(len(mono))
+            target_len = int(len(mono) * 48000 / 44100)
+            target = np.linspace(0, len(mono) - 1, target_len)
+            resampled = np.interp(target, orig, mono).astype(np.int16)
+            for i in range(0, len(resampled), 2048):
+                self._recv_q.put(resampled[i:i+2048].tobytes())
+        except Exception as e:
+            print(f"[ALARM] local error: {e}")
+
+    def transmit_alarm_globally(self):
+        import wave, time
+        alarm_path = os.path.join(script_dir, 'sounds', 'alarm.wav')
+        try:
+            with wave.open(alarm_path, 'rb') as wf:
+                raw = wf.readframes(wf.getnframes())
+            stereo = np.frombuffer(raw, dtype=np.int16).reshape(-1, 2)
+            mono = stereo.mean(axis=1).astype(np.int16)
+            orig = np.arange(len(mono))
+            target_len = int(len(mono) * 48000 / 44100)
+            target = np.linspace(0, len(mono) - 1, target_len)
+            resampled = np.interp(target, orig, mono).astype(np.int16)
+            snippet = resampled[:96000]
+            snippet_bytes = snippet.tobytes()
+            prev_loop = self.loop
+            prev_streaming = self.streaming
+            for cid, ch in self.client.channels.items():
+                ch_name = (getattr(ch, 'name', None) or ch.get('name', ''))
+                if not ch_name or ch_name == 'Root':
+                    continue
+                ch.move_in()
+                self.loop = ch_name
+                self.streaming = True
+                self.client.sound_output.add_sound(snippet_bytes)
+                time.sleep(2.5)
+                self.streaming = False
+            self.streaming = prev_streaming
+            self.loop = prev_loop
+            if prev_loop:
+                self._move_to_loop()
+        except Exception as e:
+            print(f"[ALARM] transmit error: {e}")
+
     def _update_user_map(self):
         channel_users = {}
         try:
@@ -445,6 +495,16 @@ def set_volume():
     """
     vol = float(request.json.get('volume', 1.0))
     bot.set_volume(vol)
+    return jsonify(ok=True)
+
+@app.route('/play_alarm', methods=['POST'])
+def play_alarm():
+    bot.play_alarm()
+    return jsonify(ok=True)
+
+@app.route('/transmit_alarm', methods=['POST'])
+def transmit_alarm():
+    threading.Thread(target=bot.transmit_alarm_globally, daemon=True).start()
     return jsonify(ok=True)
 
 if __name__ == '__main__':
