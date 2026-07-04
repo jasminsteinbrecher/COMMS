@@ -1,6 +1,8 @@
 from flask import Flask, render_template_string, jsonify, request, url_for
 import json, os, requests, time, sys
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # ------------------------------ CONFIG ----------------------------------
 from config_dialog import read_config, write_config
 config = read_config() or {}
@@ -24,6 +26,14 @@ def load_loops(r):
         return []
 
 LOOPS = load_loops(role)
+
+# All unique Mumble channel names across every role
+ALL_CHANNELS = sorted(set(
+    loop['name']
+    for fname in os.listdir(os.path.join(SCRIPT_DIR, 'LOOPS'))
+    if fname.endswith('.txt')
+    for loop in (json.load(open(os.path.join(SCRIPT_DIR, 'LOOPS', fname))) or [])
+))
 
 # ------------------------------ BOT POOL ---------------------------------
 BOTS = [
@@ -319,10 +329,13 @@ def command_api():
     return jsonify(port=port)
 
 # ------------------------------ ALARM ------------------------------------
-ALARM_BOT_PORT = 6004
+import subprocess
+
+ALARM_SCRIPT = os.path.join(SCRIPT_DIR, 'alarm_bot.py')
 
 @app.route('/api/alarm', methods=['POST'])
 def api_alarm():
+    # Instant local playback on all 3 existing bots
     for b in bot_pool.values():
         try:
             requests.post(
@@ -330,20 +343,27 @@ def api_alarm():
             )
         except Exception:
             pass
-    broadcast_port = BOTS[0]['port']
-    try:
-        requests.post(
-            f"http://127.0.0.1:{broadcast_port}/transmit_alarm",
-            json={}, timeout=1.0,
-        )
-    except Exception:
-        pass
-    try:
-        requests.post(
-            f"http://127.0.0.1:{ALARM_BOT_PORT}/play_alarm", json={}, timeout=1.0
-        )
-    except Exception:
-        pass
+
+    # Spawn one alarm bot per Mumble channel with staggered starts
+    alarm_id = str(int(time.time()))
+    for i, channel in enumerate(ALL_CHANNELS):
+        cmd = [
+            sys.executable, ALARM_SCRIPT,
+            '--server', str(config.get('server', '')),
+            '--port', str(config.get('port', 0)),
+            '--channel', channel,
+            '--loops', '1',
+            '--duration', '10',
+            '--stagger', str(round(i * 1.0, 1)),
+            '--suffix', alarm_id,
+        ]
+        if config.get('password'):
+            cmd.extend(['--password', config['password']])
+        try:
+            subprocess.Popen(cmd, cwd=SCRIPT_DIR)
+        except Exception as e:
+            print(f"[ALARM] Failed to spawn bot for {channel}: {e}")
+
     return '', 204
 
 
