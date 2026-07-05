@@ -4,7 +4,7 @@ import json, os, requests, time, sys
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ------------------------------ CONFIG ----------------------------------
-from config_dialog import read_config, write_config
+from config_dialog import read_config, write_config, verify_password
 config = read_config() or {}
 role   = config.get("role", "FLIGHT")
 
@@ -152,31 +152,36 @@ CONFIG_HTML = f"""
   <h2>Mission Control Setup</h2>
   <label>Server<input id='srv'></label>
   <label>Port<input id='prt' type='number'></label>
-  <label>Password<input id='pwd' type='password'></label>
   <label>Bot Base<input id='bot'></label>
   <label>Role <select id='role'>{options}</select></label>
   <button id='save'>Save</button>
 <script>
- async function load(){{
-   const cfg = await (await fetch('/api/get_config')).json();
-   document.getElementById('srv').value  = cfg.server   || '';
-   document.getElementById('prt').value  = cfg.port     || '';
-   document.getElementById('pwd').value  = cfg.password || '';
-   document.getElementById('bot').value  = cfg.bot_base || '';
-   document.getElementById('role').value = cfg.role     || 'FLIGHT';
- }}
- async function save(){{
-   const cfg = {{
-     server:  document.getElementById('srv').value,
-     port:    +document.getElementById('prt').value,
-    password:document.getElementById('pwd').value,
-     bot_base:document.getElementById('bot').value,
-     role:    document.getElementById('role').value
-   }};
-   await fetch('/api/save_config', {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(cfg)}});
-   location.href='/'
- }}
- document.addEventListener('DOMContentLoaded',() => {{ load(); document.getElementById('save').onclick = save; }});
+  async function load(){{
+    const cfg = await (await fetch('/api/get_config')).json();
+    document.getElementById('srv').value  = cfg.server   || '';
+    document.getElementById('prt').value  = cfg.port     || '';
+    document.getElementById('bot').value  = cfg.bot_base || '';
+    document.getElementById('role').value = cfg.role     || 'FLIGHT';
+  }}
+  async function save(){{
+    const role = document.getElementById('role').value;
+    const pwd = prompt("Enter password for role " + role + ":");
+    if (pwd === null) return;
+    const cfg = {{
+      server:   document.getElementById('srv').value,
+      port:     +document.getElementById('prt').value,
+      bot_base: document.getElementById('bot').value,
+      role:     role,
+      password: pwd,
+    }};
+    const res = await fetch('/api/save_config', {{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(cfg)}});
+    if (res.status === 403) {{
+      alert("Incorrect password for role " + role);
+      return;
+    }}
+    location.href='/'
+  }}
+  document.addEventListener('DOMContentLoaded',() => {{ load(); document.getElementById('save').onclick = save; }});
 </script></body></html>
 """
 
@@ -196,11 +201,16 @@ def api_get_config():
 @app.route('/api/save_config', methods=['POST'])
 def api_save_config():
     cfg = request.get_json()
+    selected_role = cfg.get("role", '')
+    pwd = cfg.pop('password', '')
+    if not verify_password(selected_role, pwd):
+        return 'Forbidden', 403
     write_config(**cfg)
-        # Update globals so the UI reflects the new role immediately
+    # Update globals so the UI reflects the new role immediately
     global config, role
     config = cfg
-    role   = cfg.get("role", role)
+    config.pop('passwords', None)
+    role = selected_role
     requests.post("http://127.0.0.1:6001/leave")
     requests.post("http://127.0.0.1:6002/leave")
     requests.post("http://127.0.0.1:6003/leave")
@@ -212,6 +222,8 @@ def api_save_config():
     bot_pool["BOT3"]['last_used'] = time.time()
     refresh_state_from_role()
     return '', 204
+
+
 
 @app.route('/api/status')
 def status_api():
@@ -357,8 +369,6 @@ def api_alarm():
             '--stagger', str(round(i * 1.0, 1)),
             '--suffix', alarm_id,
         ]
-        if config.get('password'):
-            cmd.extend(['--password', config['password']])
         try:
             subprocess.Popen(cmd, cwd=SCRIPT_DIR)
         except Exception as e:
