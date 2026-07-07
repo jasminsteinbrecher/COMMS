@@ -12,14 +12,14 @@ ROLES = [
 ]
 
 PASSWORDS = {
-    "FLIGHT":  "flight2026",
-    "CAPCOM":  "capcom2026",
-    "PRO":     "pro2026",
-    "BME":     "bme2026",
-    "EVA":     "eva2026",
-    "SCIENCE": "science2026",
-    "CONTACT": "contact2026",
-    "AA":      "aa2026",
+    "FLIGHT":  "kP9!vX2$mL5*qR",
+    "CAPCOM":  "3bF~7wK_2pZs+Q",
+    "PRO":     "tN4#mY9.rV1=fX",
+    "BME":     "wG6&xP3?zL8-qK",
+    "EVA":     "8jD%2kC[9mB]5v",
+    "SCIENCE": "4hS/7vF(2dT)9m",
+    "CONTACT": "zB1@kM5_8xP2*r",
+    "AA":      "9vY$3mC!7kR-2p",
 }
 
 def verify_password(role, password):
