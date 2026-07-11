@@ -9,5 +9,6 @@
   {"name": "COMMANDS",        "can_listen": true,  "can_talk": true},
   {"name": "SG SCIENCE",     "can_listen": true,  "can_talk": true},
   {"name": "SG PRIVATE 1",   "can_listen": true,  "can_talk": true},
-  {"name": "SG PRIVATE 2",   "can_listen": true,  "can_talk": true}
+  {"name": "SG PRIVATE 2",   "can_listen": true,  "can_talk": true},
+  {"name": "SG EVA CONFERENCE",    "can_listen": true,  "can_talk": true}
 ]

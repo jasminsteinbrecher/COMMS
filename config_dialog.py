@@ -8,7 +8,7 @@ import webbrowser
 CONFIG_FILE = "run_config.json"
 
 ROLES = [
-    "FLIGHT", "CAPCOM", "PRO", "BME", "EVA", "SCIENCE", "CONTACT", "AA"
+    "FLIGHT", "CAPCOM", "PRO", "BME", "EVA", "SCIENCE", "CONTACT", "AA", "CMO"
 ]
 
 PASSWORDS = {
@@ -20,6 +20,7 @@ PASSWORDS = {
     "SCIENCE": "4hS/7vF(2dT)9m",
     "CONTACT": "zB1@kM5_8xP2*r",
     "AA":      "9vY$3mC!7kR-2p",
+    "CMO":     "4xG#8wQ!2mR-9k4"
 }
 
 def verify_password(role, password):

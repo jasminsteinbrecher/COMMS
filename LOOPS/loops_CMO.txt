@@ -5,5 +5,6 @@
   {"name": "SG PRIVATE 1",         "can_listen": true,  "can_talk": true},
   {"name": "SG PRIVATE 2",         "can_listen": true,  "can_talk": true},
   {"name": "SG PRIVATE MEDICAL",   "can_listen": true,  "can_talk": true},
+  {"name": "SG CMO CONFERENCE",    "can_listen": true,  "can_talk": true},
   {"name": "SG EVA CONFERENCE",    "can_listen": true,  "can_talk": true}
 ]

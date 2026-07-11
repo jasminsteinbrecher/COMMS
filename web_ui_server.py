@@ -9,7 +9,7 @@ config = read_config() or {}
 role   = config.get("role", "FLIGHT")
 
 ROLES = [
-    "FLIGHT", "CAPCOM", "PRO", "BME", "EVA", "SCIENCE", "CONTACT", "AA"
+    "FLIGHT", "CAPCOM", "PRO", "BME", "EVA", "SCIENCE", "CONTACT", "AA", "CMO"
 ]
 
 # Build HTML option tags for roles once
