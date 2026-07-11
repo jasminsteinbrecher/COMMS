@@ -62,7 +62,8 @@ def load_alarm_snippet(duration_seconds=10):
     samples_needed = int(48000 * duration_seconds)
     if len(resampled) > samples_needed:
         resampled = resampled[:samples_needed]
-    return resampled.tobytes()
+    boosted = np.clip(resampled * 2.0, -32768, 32767).astype(np.int16)
+    return boosted.tobytes()
 
 # ------------------------------ MAIN ------------------------------
 def main():
@@ -97,14 +98,6 @@ def main():
     client = Mumble(args.server, bot_name, **kwargs)
     client.set_receive_sound(False)
     client.start()
-    if hasattr(client, "undeafen"):
-        client.undeafen()
-    elif hasattr(client, "set_deaf"):
-        client.set_deaf(False)
-    if hasattr(client, "unmute"):
-        client.unmute()
-    elif hasattr(client, "set_mute"):
-        client.set_mute(False)
 
     # Wait for connection
     for _ in range(30):
@@ -114,6 +107,12 @@ def main():
     else:
         print(f"[ALARM_BOT] {bot_name}: connect timeout")
         sys.exit(1)
+
+    # Unmute / undeafen (actual protobuf commands via pymumble)
+    if client.users.myself:
+        client.users.myself.unmute()
+        client.users.myself.undeafen()
+    time.sleep(0.2)
 
     # Wait for channel list to populate, then find target channel
     target_ch = None
